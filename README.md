@@ -32,8 +32,9 @@ k3s/
   02-k3s-deployment.md
   03-gitlab.md
   04-gitlab-runners.md
-  05-sonarqube.md
-  06-recreate-gitlab.md
+  05-recreate-gitlab.md
+  06-sonarqube.md
+  07-harbor.md
 ```
 
 ## Security note
