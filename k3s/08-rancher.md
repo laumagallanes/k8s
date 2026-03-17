@@ -20,39 +20,86 @@ The original installation notes indicate Rancher was deployed in:
 
 That is the standard Rancher namespace and should be kept unless there is a strong reason to diverge.
 
-## Installation result
+## Small installation how-to with Helm
 
-The recovered notes show a successful installation with Helm, ending in a deployed release and bootstrap-password generation.
+A practical Helm-based installation flow looks like this:
 
-That tells us the intended deployment model was:
+### 1. Prepare prerequisites
 
-- install Rancher in-cluster
-- expose it through ingress
-- wait for certificates and ingress to become ready
-- complete first-login bootstrap from the generated password
+Before installing Rancher, make sure you already have:
 
-## General installation flow
+- a working K3s cluster
+- ingress available
+- DNS or at least a planned hostname for Rancher
+- TLS strategy defined, whether temporary or proper
+- Helm installed on the administration machine
 
-A practical Rancher deployment guide should look like this:
+### 2. Add the Rancher Helm repository
 
-1. ensure ingress is working
-2. ensure certificates are available or planned
-3. create or confirm the target namespace
-4. install Rancher with Helm
-5. wait for pods and ingress readiness
-6. retrieve bootstrap credentials
-7. complete initial setup in the web UI
+```bash
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+helm repo update
+```
 
-## Bootstrap password retrieval
+### 3. Create the namespace
 
-A standard way to retrieve the generated bootstrap password is:
+```bash
+kubectl create namespace cattle-system
+```
+
+### 4. Install cert-manager if your setup requires it
+
+In many Rancher deployments, certificates are part of the bootstrap path. The exact setup may vary, but cert-manager is a common dependency if you are not terminating everything elsewhere.
+
+### 5. Install Rancher with Helm
+
+A typical pattern is:
+
+```bash
+helm install rancher rancher-stable/rancher \
+  --namespace cattle-system \
+  --set hostname=rancher.example.internal \
+  --set replicas=1
+```
+
+Adjust the hostname and replica count to fit the environment.
+
+### 6. Wait for readiness
+
+After installation, allow time for:
+
+- certificates to be issued
+- containers to start
+- ingress routes to come up
+
+Check status with:
+
+```bash
+kubectl get pods -n cattle-system
+kubectl get ingress -n cattle-system
+```
+
+### 7. Retrieve the bootstrap password
+
+If you did not predefine your own bootstrap password, get it with:
 
 ```bash
 kubectl get secret --namespace cattle-system bootstrap-secret \
   -o go-template='{{.data.bootstrapPassword|base64decode}}{{ "\n" }}'
 ```
 
-This is useful if you did not define your own bootstrap password during installation.
+Then complete first login in the Rancher UI.
+
+## Installation result seen in the notes
+
+The recovered notes show a successful installation with Helm, ending in a deployed release and bootstrap-password generation.
+
+That confirms the intended deployment model was:
+
+- install Rancher in-cluster
+- expose it through ingress
+- wait for certificates and ingress to become ready
+- complete first-login bootstrap from the generated password
 
 ## Operational note
 

@@ -37,6 +37,7 @@ k3s/
   07-harbor.md
   08-rancher.md
   09-argocd.md
+  10-sentry.md
   07-harbor.md
 ```
 
