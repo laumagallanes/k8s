@@ -35,6 +35,9 @@ k3s/
   05-recreate-gitlab.md
   06-sonarqube.md
   07-harbor.md
+  08-rancher.md
+  09-argocd.md
+  07-harbor.md
 ```
 
 ## Security note

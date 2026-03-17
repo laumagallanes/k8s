@@ -1,49 +1,76 @@
 # Overview
 
-This project documents a sanitized, real-world CI/CD platform built on **K3s** for an on-prem environment.
+This project documents a sanitized, real-world CI/CD platform built around **K3s** and supporting self-hosted tooling.
 
-The goal is to describe how the moving parts fit together in practice:
+The idea is simple: keep the infrastructure understandable, reproducible and maintainable, even when the environment is on-prem and the setup grows in layers over time.
 
-- source control and CI with **GitLab**
-- job execution with **GitLab Runner**
-- image storage in **Harbor**
-- static analysis with **SonarQube**
-- cluster administration with **Rancher**
-- runtime error tracking with **Sentry**
-- GitOps delivery with **Argo CD**
+## High-level architecture
 
-## Main objective
+The platform is split into two main areas:
 
-Provide a repeatable reference for teams that need a self-hosted pipeline from commit to cluster, without depending entirely on managed cloud services.
+### 1. Devtools node
 
-## Context
+A dedicated **devtools** machine runs the external platform services that support the delivery flow.
 
-This documentation comes from a real implementation, but everything environment-specific has been removed:
+Typical services hosted there include:
 
-- no client names
-- no internal domains
-- no IP addresses
-- no credentials or tokens
-- no private application names
+- **GitLab**
+- **Harbor**
+- **SonarQube**
+- **GitLab Runner**
 
-## Platform intent
+This keeps the CI and supporting tooling outside the Kubernetes cluster itself, which can simplify early deployments and make troubleshooting more direct.
 
-The platform supports a flow where developers push code to GitLab, trigger build and validation stages, publish container images to Harbor, and deploy workloads to K3s using a GitOps approach.
+### 2. K3s cluster
 
-## Why K3s
+A **5-node K3s cluster** runs the Kubernetes-side platform components and application workloads.
 
-K3s is a practical fit for environments where:
+Within the cluster, the platform may host components such as:
 
-- infrastructure is limited or heterogeneous
-- operational simplicity matters
-- teams want Kubernetes without the full weight of a larger distribution
-- clusters may be assembled incrementally
+- **Rancher**
+- **Argo CD**
+- **Vault**
+- ingress-related components
+- application workloads
+- supporting services added later
 
-## Core concerns addressed by this documentation
+This separation makes it easier to reason about responsibilities:
 
-- how to deploy the platform components
-- how to expose services internally and externally
-- how to connect runners, registry and cluster
-- how to handle TLS and internal certificate friction
-- how to back up critical services
-- how to debug common operational failures
+- the devtools machine handles build-time and platform-adjacent services
+- the cluster handles runtime orchestration and cluster-native tooling
+
+## Typical flow
+
+1. developers push code to GitLab
+2. GitLab Runner builds the application
+3. images are pushed to Harbor
+4. deployment definitions are updated
+5. Argo CD syncs changes into K3s
+6. applications run in the cluster
+7. Rancher helps operate the cluster
+8. SonarQube and other tools provide quality feedback
+
+## Why this layout is useful
+
+This design is practical for teams that:
+
+- are building their first serious self-hosted platform
+- need clear ownership boundaries
+- want Kubernetes without putting every single tool inside it from day one
+- need a migration path from "just make it work" to "make it clean"
+
+## What this repository focuses on
+
+This repository is not meant to be a product brochure. It is a technical how-to based on field work.
+
+The goal is to document:
+
+- how the components were deployed
+- how they were connected
+- what assumptions matter
+- where the fragile parts usually are
+- how to recover from the inevitable disasters
+
+## Sanitization rule
+
+All customer-specific information, credentials, hostnames, IP addresses and internal references have been removed or generalized.
